@@ -1,0 +1,277 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMAA ULTRA</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+
+body{
+background:#eef5ff;
+color:#111827;
+}
+
+header{
+background:white;
+padding:30px 20px;
+text-align:center;
+box-shadow:0 5px 20px rgba(0,0,0,.08);
+position:sticky;
+top:0;
+z-index:100;
+}
+
+header h1{
+font-size:3.2rem;
+background:linear-gradient(90deg,#2563eb,#38bdf8);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+header p{
+margin-top:10px;
+color:#555;
+}
+
+.top-buttons{
+display:flex;
+justify-content:center;
+gap:15px;
+padding:25px;
+flex-wrap:wrap;
+}
+
+.btn-top,.download-btn{
+border:none;
+padding:14px 25px;
+border-radius:40px;
+background:linear-gradient(135deg,#2563eb,#38bdf8);
+color:white;
+font-weight:600;
+cursor:pointer;
+text-decoration:none;
+display:inline-block;
+}
+
+.search-box{
+display:flex;
+justify-content:center;
+padding:0 20px 25px;
+}
+
+.search-box input{
+width:100%;
+max-width:550px;
+padding:16px 24px;
+border:none;
+border-radius:40px;
+background:white;
+box-shadow:0 8px 20px rgba(0,0,0,.08);
+font-size:1rem;
+outline:none;
+}
+
+.grid{
+column-count:3;
+column-gap:20px;
+padding:20px;
+}
+
+@media(max-width:900px){ .grid{column-count:2;} }
+@media(max-width:600px){ .grid{column-count:1;} }
+
+.card{
+break-inside:avoid;
+background:white;
+border-radius:22px;
+overflow:hidden;
+margin-bottom:20px;
+box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+video,img{
+width:100%;
+display:block;
+}
+
+.content{padding:16px;}
+
+.select{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid #ddd;
+margin-bottom:12px;
+}
+
+.loading{
+padding:50px;
+text-align:center;
+font-size:1.2rem;
+font-weight:600;
+color:#2563eb;
+}
+
+footer{
+text-align:center;
+padding:30px;
+color:#666;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>AMAA</h1>
+<p>Srilanka Free Video And photo Download Site. Powered By Amayuru</p>
+</header>
+
+<div class="top-buttons">
+<button class="btn-top" onclick="loadVideos()">🎬 Videos</button>
+<button class="btn-top" onclick="loadPhotos()">📸 Photos</button>
+</div>
+
+<div class="search-box">
+<input type="text" id="search" placeholder="Search content...">
+</div>
+
+<section class="grid" id="grid">
+<div class="loading">Loading...</div>
+</section>
+
+<footer>
+© 2026 AMAA ULTRA
+</footer>
+
+<script>
+const API_KEY = "W2uSxyPjiN6rfcFlJPRdV0x7wAXTXJsyDSBqyyok1nFdMboDtqBUexrQ";
+const grid = document.getElementById("grid");
+const search = document.getElementById("search");
+
+let mode = "videos";
+
+function qualityName(w){
+if(w >= 3800) return "4K";
+if(w >= 1900) return "2K";
+if(w >= 1200) return "1080p";
+return "HD";
+}
+
+async function loadVideos(query="nature"){
+mode = "videos";
+grid.innerHTML = '<div class="loading">Loading Ultra Videos...</div>';
+
+const res = await fetch(`https://api.pexels.com/videos/search?query=${query}&per_page=12`, {
+headers:{Authorization:API_KEY}
+});
+
+const data = await res.json();
+
+grid.innerHTML = "";
+
+data.videos.forEach(video=>{
+
+const files = [...video.video_files].sort((a,b)=>(b.width*b.height)-(a.width*a.height));
+
+const defaultSrc = files[0].link;
+
+const card = document.createElement("div");
+card.className = "card";
+
+let options = "";
+
+files.forEach(f=>{
+options += `<option value="${f.link}">${qualityName(f.width)} - ${f.width}x${f.height}</option>`;
+});
+
+card.innerHTML = `
+<video controls id="vid-${video.id}">
+<source src="${defaultSrc}" type="video/mp4">
+</video>
+
+<div class="content">
+<h3>🎬 ${video.user.name}</h3>
+
+<select class="select" onchange="changeQuality('vid-${video.id}', this)">
+${options}
+</select>
+
+<a class="download-btn" id="down-${video.id}" href="${defaultSrc}" download>
+Download Video
+</a>
+</div>
+`;
+
+grid.appendChild(card);
+});
+}
+
+async function loadPhotos(query="nature"){
+mode = "photos";
+
+grid.innerHTML = '<div class="loading">Loading Ultra Photos...</div>';
+
+const res = await fetch(`https://api.pexels.com/v1/search?query=${query}&per_page=12`, {
+headers:{Authorization:API_KEY}
+});
+
+const data = await res.json();
+
+grid.innerHTML = "";
+
+data.photos.forEach(photo=>{
+
+const card = document.createElement("div");
+card.className = "card";
+
+card.innerHTML = `
+<img src="${photo.src.large2x}" />
+
+<div class="content">
+<h3>📸 ${photo.photographer}</h3>
+
+<select class="select">
+<option value="${photo.src.large}">HD</option>
+<option value="${photo.src.large2x}">1080p</option>
+<option value="${photo.src.original}">4K / Original</option>
+</select>
+
+<a class="download-btn" href="${photo.src.original}" download>
+Download Photo
+</a>
+</div>
+`;
+
+grid.appendChild(card);
+});
+}
+
+function changeQuality(id, select){
+const video = document.getElementById(id);
+video.src = select.value;
+video.load();
+
+const downloadBtn = document.getElementById(id.replace("vid","down"));
+downloadBtn.href = select.value;
+}
+
+search.addEventListener("keypress",(e)=>{
+if(e.key === "Enter"){
+if(mode === "videos"){
+loadVideos(search.value);
+} else {
+loadPhotos(search.value);
+}
+}
+});
+
+loadVideos();
+</script>
+
+</body>
+</html>
